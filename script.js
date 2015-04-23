@@ -18,7 +18,8 @@ var pathArray,
 	pointsArray,
 	polygons,
 	polygon;
-var fft;
+var fft,
+	spectrum;
 var growingPains, 
     urkel,
     howRude,
@@ -33,11 +34,15 @@ function preload() {
 
 function setup() {
 	regenstrief = [r1, e, g, e2, n, s, t, r2, i, e3, f];
+	eightiesArray = [growingPains, urkel, howRude, whoa];
 	fft = new p5.FFT();
-	createCanvas(window.innerWidth - 30, window.innerHeight - 30);
-	sketch = SVG("drawing").size(window.innerWidth - 30, window.innerHeight - 30);
+	sketch = SVG("drawing").size(window.innerWidth - 30, window.innerHeight - 60);
 	pointsArrays = [];
 	polygons = [];
+
+	for (var j = 0, eightiesArrayLen = eightiesArray.length; j < eightiesArrayLen; j++) {
+		eightiesArray[j].playMode("restart");
+	}
 
 	for (var j = 0, wordLen = regenstrief.length; j < wordLen; j++) {
 		pathArray = new SVG.PathArray(regenstrief[j]);
@@ -50,40 +55,49 @@ function setup() {
 
 function draw() {
 	for (var b = 0, pointsArraysLen = pointsArrays.length; b < pointsArraysLen; b++) {
-		polygons[b].plot(breakApart(pointsArrays[b]));
+		for (var j = 0, eightiesArrayLen = eightiesArray.length; j < eightiesArrayLen; j++) {
+			// make an array of 0s as long as the spectrum. we'll either use an array of zeros or the spectrum.
+			var spectrumLength = 1024;
+			var zeroSpectrum = [];
+			for (var v = 0; v < spectrumLength; v++) {
+				zeroSpectrum.push(0);
+			}
+
+			// if all of these are not playing
+			spectrum = fft.analyze();
+			polygons[b].plot(breakApart(pointsArrays[b]));
+		}
 	}
 }
 
 function keyPressed() {
-  eightiesArray = [growingPains, urkel, howRude, whoa];
+	if (keyCode === LEFT_ARROW) {
+		eightiesArray[0].play();
+	}
 
-  if(keyCode === LEFT_ARROW) {
-    eightiesArray[0].play();
-  }
+	if (keyCode === RIGHT_ARROW) {
+		eightiesArray[1].play();
+	}
 
-  if(keyCode === RIGHT_ARROW) {
-    eightiesArray[1].play();
-  }
+	if (keyCode === UP_ARROW) {
+		eightiesArray[2].play();
+	}
 
-  if(keyCode === UP_ARROW) {
-    eightiesArray[2].play();
-  }
-
-  if(keyCode === DOWN_ARROW) {
-    eightiesArray[3].play();
-  }
+	if (keyCode === DOWN_ARROW) {
+		eightiesArray[3].play();
+	}
 }
 
 function breakApart(thisPointsArray) {
 	var newArr = [];
-	var spectrum = fft.analyze();
+
 	for (var j = 0, len = thisPointsArray.length; j < len; j++) {
-		var factor = map(spectrum[j], 0, 255, 1, 8),
-			randomX = getRandom(-1, 1),
+		var factor = map(spectrum[j], 0, 255, 1, 21);
+		var randomX = getRandom(-1, 1),
 			randomY = getRandom(-1, 1);
-		var angle = (Math.PI * 2)/len * j;
+		var angle = (Math.PI * 2) * j;
 		var doubles = [];
-		doubles.push(thisPointsArray[j][0] + Math.cos(angle) + randomX * factor, thisPointsArray[j][1] + Math.sin(angle) + randomY * factor);
+		doubles.push(thisPointsArray[j][0] + (randomX * factor), thisPointsArray[j][1] + (randomY * factor));
 		newArr.push(doubles);
 	}
 	return newArr;
