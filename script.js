@@ -10,28 +10,83 @@ var r1 = "M175.677,162.807c4.532-0.927,11.021-1.442,17.201-1.442c9.579,0,15.758,
     e3 = "M587.259,208.022c0.206,12.257,8.034,17.304,17.098,17.304c6.489,0,10.402-1.133,13.802-2.575l1.545,6.489 c-3.193,1.442-8.652,3.09-16.582,3.09c-15.348,0-24.514-10.094-24.514-25.131c0-15.038,8.857-26.882,23.38-26.882 c16.273,0,20.6,14.316,20.6,23.483c0,1.854-0.206,3.296-0.309,4.223H587.259z M613.832,201.533 c0.104-5.768-2.369-14.729-12.565-14.729c-9.167,0-13.184,8.446-13.905,14.729H613.832z",
     f = "M634.74,231.299v-42.95h-7.003v-6.901h7.003v-2.369c0-7.004,1.545-13.39,5.769-17.407 c3.398-3.296,7.931-4.635,12.153-4.635c3.193,0,5.974,0.721,7.725,1.442l-1.235,7.004c-1.34-0.618-3.193-1.133-5.769-1.133 c-7.725,0-9.682,6.798-9.682,14.419v2.678h12.051v6.901h-12.051v42.95H634.74z";
 
-var regenstrief = [r1, e, g, e2, n, s, t, r2, i, e3, f];
+var regenstrief;
+var sketch;
+var eightiesArray;
+var pathArray,
+	pointsArrays,
+	pointsArray,
+	polygons,
+	polygon;
+var fft;
+var growingPains, 
+    urkel,
+    howRude,
+    whoa;
 
-var draw = SVG("drawing").size(1200, 800);
-var pathArray = new SVG.PathArray(regenstrief[0]);
-var pointsArray = pathArray.toPoly("0.3%", true)["value"];
-
-var polygon = draw.polygon(pointsArray);
-
-for (var i = 0, len = regenstrief.length; i < len; i++) {
-	breakApart(getRandom(-5, 5));
+function preload() {
+  growingPains = loadSound("raw_files/growing_pains.mp3");
+  urkel = loadSound("raw_files/urkel.mp3");
+  howRude = loadSound("raw_files/how_rude.mp3");
+  whoa = loadSound("raw_files/whoa.mp3");
 }
 
-function breakApart(random) {
-	var newPointsArray = [];
-	for (var i = 0, len = pointsArray.length; i < len; i++) {
-		var randomX = random + getRandom(-30, 30),
-			randomY = random + getRandom(-30, 30);
-		var arr = [];
-		arr.push(pointsArray[i][0] + randomX, pointsArray[i][1] + randomY);
-		newPointsArray.push(arr);
+function setup() {
+	regenstrief = [r1, e, g, e2, n, s, t, r2, i, e3, f];
+	fft = new p5.FFT();
+	createCanvas(window.innerWidth - 30, window.innerHeight - 30);
+	sketch = SVG("drawing").size(window.innerWidth - 30, window.innerHeight - 30);
+	pointsArrays = [];
+	polygons = [];
+
+	for (var j = 0, wordLen = regenstrief.length; j < wordLen; j++) {
+		pathArray = new SVG.PathArray(regenstrief[j]);
+		pointsArray = pathArray.toPoly("0.5%", true)["value"];
+		pointsArrays.push(pointsArray);
+		polygon = sketch.polygon(pointsArrays[j]);
+		polygons.push(polygon);
 	}
-	polygon.animate(600).plot(newPointsArray).loop();
+}
+
+function draw() {
+	for (var b = 0, pointsArraysLen = pointsArrays.length; b < pointsArraysLen; b++) {
+		polygons[b].plot(breakApart(pointsArrays[b]));
+	}
+}
+
+function keyPressed() {
+  eightiesArray = [growingPains, urkel, howRude, whoa];
+
+  if(keyCode === LEFT_ARROW) {
+    eightiesArray[0].play();
+  }
+
+  if(keyCode === RIGHT_ARROW) {
+    eightiesArray[1].play();
+  }
+
+  if(keyCode === UP_ARROW) {
+    eightiesArray[2].play();
+  }
+
+  if(keyCode === DOWN_ARROW) {
+    eightiesArray[3].play();
+  }
+}
+
+function breakApart(thisPointsArray) {
+	var newArr = [];
+	var spectrum = fft.analyze();
+	for (var j = 0, len = thisPointsArray.length; j < len; j++) {
+		var factor = map(spectrum[j], 0, 255, 1, 8),
+			randomX = getRandom(-1, 1),
+			randomY = getRandom(-1, 1);
+		var angle = (Math.PI * 2)/len * j;
+		var doubles = [];
+		doubles.push(thisPointsArray[j][0] + Math.cos(angle) + randomX * factor, thisPointsArray[j][1] + Math.sin(angle) + randomY * factor);
+		newArr.push(doubles);
+	}
+	return newArr;
 }
 
 function getRandom(min, max) {
