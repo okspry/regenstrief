@@ -11,88 +11,84 @@ var r1 = "M175.677,162.807c4.532-0.927,11.021-1.442,17.201-1.442c9.579,0,15.758,
     f = "M634.74,231.299v-42.95h-7.003v-6.901h7.003v-2.369c0-7.004,1.545-13.39,5.769-17.407 c3.398-3.296,7.931-4.635,12.153-4.635c3.193,0,5.974,0.721,7.725,1.442l-1.235,7.004c-1.34-0.618-3.193-1.133-5.769-1.133 c-7.725,0-9.682,6.798-9.682,14.419v2.678h12.051v6.901h-12.051v42.95H634.74z";
 
 var regenstrief;
-var sketch;
+var sketch,
+	group;
 var eightiesArray;
 var pathArray,
 	pointsArrays,
 	pointsArray,
 	polygons,
 	polygon;
-var fft,
-	spectrum;
-var growingPains, 
-    urkel,
-    howRude,
-    whoa;
+var amplitude;
+var beginning,
+	tap1,
+	tap2,
+	anythingforlove;
 
 function preload() {
-  growingPains = loadSound("raw_files/growing_pains.mp3");
-  urkel = loadSound("raw_files/urkel.mp3");
-  howRude = loadSound("raw_files/how_rude.mp3");
-  whoa = loadSound("raw_files/whoa.mp3");
+  beginning = loadSound("raw_files/beginning.mp3");
+  tap1 = loadSound("raw_files/tap1.mp3");
+  tap2 = loadSound("raw_files/tap2.mp3");
+  anythingforlove = loadSound("raw_files/anythingforlove.mp3");
 }
 
 function setup() {
 	regenstrief = [r1, e, g, e2, n, s, t, r2, i, e3, f];
-	eightiesArray = [growingPains, urkel, howRude, whoa];
 	fft = new p5.FFT();
+	amplitude = new p5.Amplitude();
 	sketch = SVG("drawing").size(window.innerWidth - 30, window.innerHeight - 60);
 	pointsArrays = [];
 	polygons = [];
 
-	for (var j = 0, eightiesArrayLen = eightiesArray.length; j < eightiesArrayLen; j++) {
-		eightiesArray[j].playMode("restart");
-	}
+	beginning.playMode("sustain");
+	tap1.playMode("sustain");
+	tap2.playMode("sustain");
+	anythingforlove.playMode("restart");
+
+	group = sketch.group();
 
 	for (var j = 0, wordLen = regenstrief.length; j < wordLen; j++) {
 		pathArray = new SVG.PathArray(regenstrief[j]);
 		pointsArray = pathArray.toPoly("0.5%", true)["value"];
 		pointsArrays.push(pointsArray);
-		polygon = sketch.polygon(pointsArrays[j]);
+		polygon = group.polygon(pointsArrays[j]);
 		polygons.push(polygon);
 	}
 }
 
 function draw() {
 	for (var b = 0, pointsArraysLen = pointsArrays.length; b < pointsArraysLen; b++) {
-		for (var j = 0, eightiesArrayLen = eightiesArray.length; j < eightiesArrayLen; j++) {
-			// make an array of 0s as long as the spectrum. we'll either use an array of zeros or the spectrum.
-			var spectrumLength = 1024;
-			var zeroSpectrum = [];
-			for (var v = 0; v < spectrumLength; v++) {
-				zeroSpectrum.push(0);
-			}
-
-			// if all of these are not playing
-			spectrum = fft.analyze();
-			polygons[b].plot(breakApart(pointsArrays[b]));
-		}
+		polygons[b].plot(breakApart(pointsArrays[b]));
 	}
 }
 
 function keyPressed() {
 	if (keyCode === LEFT_ARROW) {
-		eightiesArray[0].play();
+		beginning.loop();
 	}
+
+	// if (keyCode === UP_ARROW) {
+	// 	tap1.loop();
+	// }
+
+	// if (keyCode === DOWN_ARROW) {
+	// 	tap2.loop();
+	// }
 
 	if (keyCode === RIGHT_ARROW) {
-		eightiesArray[1].play();
-	}
-
-	if (keyCode === UP_ARROW) {
-		eightiesArray[2].play();
-	}
-
-	if (keyCode === DOWN_ARROW) {
-		eightiesArray[3].play();
+		beginning.stop();
+		tap1.stop();
+		tap2.stop();
+		anythingforlove.play();
 	}
 }
 
 function breakApart(thisPointsArray) {
 	var newArr = [];
+	var level = amplitude.getLevel();
 
 	for (var j = 0, len = thisPointsArray.length; j < len; j++) {
-		var factor = map(spectrum[j], 0, 255, 1, 21);
+		var factor = map(level, 0, 1, 1, 44);
 		var randomX = getRandom(-1, 1),
 			randomY = getRandom(-1, 1);
 		var angle = (Math.PI * 2) * j;

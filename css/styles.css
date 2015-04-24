@@ -1,4 +1,4 @@
 polyline, polygon {
-	fill: transparent;
-	stroke: hsla(333, 100%, 60%, 1);
+	fill: hsla(333, 100%, 60%, 1);
+	stroke: transparent;
 }
